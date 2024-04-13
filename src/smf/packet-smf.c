@@ -3343,7 +3343,6 @@ void proto_reg_handoff_smf(void)
         protobuf_handle = find_dissector("protobuf");
         dissector_add_for_decode_as("smf_payload_dissector_table", protobuf_handle);
         smf_reas_init();
-        sdt_decoder_init();
         inited = TRUE;
    }
 
