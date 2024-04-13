@@ -38,6 +38,8 @@
 #include <epan/column-info.h>
 
 #include "packet-smf.h"
+#include "sdt-decoder.h"
+
 /* SDT Types */
 #define SDT_NULL        0x00
 #define SDT_BOOLEAN     0x01
@@ -75,10 +77,12 @@ static const char *str_mapnone = "";
 static char *strtopic = "Topic";
 static char *strqueue = "Queue";
 
+static int proto_smf_sdt = -1;
 static dissector_handle_t xml_handle;
 static dissector_handle_t smrp_handle;
 
 gint ett_trace_span_message_creation_context = -1;
+static int hf_smf_attachment_sdt = -1;
 
 void get_embedded_smf_info(tvbuff_t* tvb, int offset, int length, int* embedded_smf_info)
 {
@@ -171,6 +175,15 @@ static void get_destination_string(tvbuff_t *tvb, int offset, int length, char *
    ********************************************************************************************************************************
    ********************************************************************************************************************************
  */
+
+static int dissect_smf_sdt(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data) {
+    int length = tvb_reported_length(tvb);
+    if (length >= 5) {
+        add_sdt_block(tree, pinfo, hf_smf_attachment_sdt, tvb, 5, length-5, 1, FALSE);
+        return tvb_captured_length(tvb);
+    }
+    return -1;
+}
 
 void
 add_sdt_block(proto_tree *bm_tree, packet_info* pinfo, int headerFieldIndex, tvbuff_t *tvb, int offset, int length, int indent, 
@@ -433,3 +446,25 @@ void sdt_decoder_init(void)
     xml_handle = find_dissector("xml");
     smrp_handle = find_dissector("solace.smrp");
 }
+
+void proto_reg_handoff_sdt_decoder(void)
+{
+    static gboolean inited = FALSE;
+        
+	if (!inited) {
+        sdt_decoder_init();
+
+        header_field_info* field_info = proto_registrar_get_byname("smf.attachment_sdt");
+        hf_smf_attachment_sdt = field_info->id;
+        inited = TRUE;
+    }
+}
+
+void proto_register_sdt_decoder(void)
+{
+
+    proto_smf_sdt = proto_register_protocol("Solace SDT Decoder", "SMF-SDT", "smf-sdt");
+    register_dissector("solace.smf-sdt", dissect_smf_sdt, proto_smf_sdt);
+
+}
+
