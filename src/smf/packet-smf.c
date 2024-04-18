@@ -200,6 +200,7 @@ static int hf_smf_reassembled_in = -1;
 /*Miscellaneous*/
 static int hf_smf_unknown_param = -1;
 static int hf_smf_payload = -1;
+static int hf_smf_attachment_size = -1;
 static int hf_smf_attachment = -1;
 static int hf_smf_attachment_sdt = -1;
 static int hf_smf_binary_metadata = -1;
@@ -1821,6 +1822,8 @@ static int dissect_smf_common(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tre
             get overwritten if there is a MessageContentsSummary parameter. */
         param_info.attachment_start = 0;
         param_info.attachment_length = msg_len - payload_offset;
+        proto_item *item = proto_tree_add_uint(smf_tree, hf_smf_attachment_size, tvb, 0, 0, param_info.attachment_length);
+        proto_item_set_generated(item);
         break;
     default:
         /* Default the xml payload length to the size of the message.  This will
@@ -1961,7 +1964,6 @@ static int dissect_smf_common(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tre
                         add_sdt_block(attach_tree, pinfo, hf_smf_attachment_sdt, tvb,
                             payload_offset + param_info.attachment_start + 5,
                             param_info.attachment_length - 5, 1, FALSE);
-
 
                         break;
                     }
@@ -2725,6 +2727,12 @@ void proto_register_smf(void)
                 { "Payload", "smf.payload",
                     FT_BYTES, BASE_NONE, NULL, 0x0,
                     "", HFILL } },
+
+            { &hf_smf_attachment_size,
+                { "Attachment Size", "smf.attachment_size",
+                    FT_UINT16, BASE_DEC, NULL, 0x0,
+                    "", HFILL
+                    }},
 
             { &hf_smf_attachment,
                 { "Attachment", "smf.attachment",
