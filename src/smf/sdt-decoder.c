@@ -179,6 +179,7 @@ add_sdt_block(proto_tree *bm_tree, packet_info* pinfo, int headerFieldIndex, tvb
     int item_cnt;   /* count of SDT items processed */
 
     int protocol_cnt = -1; /* position of "protocol" */
+    int content_encoding_cnt = -1;
     int body_cnt = -1;     /* position of "body" */
     char *protocol_type = NULL; /* protocol type name */
     char* key_value = NULL; /* if the previous entry was a string and a key holds its value, otherwise is NULL */
@@ -368,6 +369,14 @@ add_sdt_block(proto_tree *bm_tree, packet_info* pinfo, int headerFieldIndex, tvb
                         protocol_type = string_payload;
                         if (strcmp(protocol_type, "CSPF") == 0) {
                             col_append_fstr(pinfo->cinfo, COL_PROTOCOL, " CSPF");
+                        }
+                    }
+                    if (strcmp(string_payload, "ce") == 0) { // content encoding
+                        content_encoding_cnt = item_cnt;
+                    }
+                    if ((string_payload != -1) && (string_payload + 1 == item_cnt)) {
+                        if (strcmp(string_payload, "deflate") == 0) {
+                            deflate_payload = true;
                         }
                     }
                     if (strcmp(string_payload, "body") == 0) {

@@ -437,6 +437,7 @@ struct param_info_t
     int cidlist_length;
     int binary_metadata_start;
     int binary_metadata_length;
+    bool is_payload_compressed;
     int32_t correlation_tag;
     bool ack_immediately_tag;
 };
@@ -1994,7 +1995,7 @@ static int dissect_smf_common(tvbuff_t* tvb, packet_info* pinfo, proto_tree* tre
                         metadata_start,
                         -1,
                         param_info.binary_metadata_length);
-                    call_dissector(bm_handle, next_tvb, pinfo, smf_tree);
+                    call_dissector_with_data(bm_handle, next_tvb, pinfo, smf_tree, &param_info);
                 }
             }
             break;
